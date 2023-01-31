@@ -35,8 +35,14 @@ class Project(models.Model):
         if "key" not in vals:
             vals["key"] = self.generate_project_key(vals["name"])
 
+        # Tasks must be created after the project.
+        task_vals = vals.pop("task_ids")
+
         new_project = super(Project, self).create(vals)
         new_project.create_sequence()
+
+        # Tasks must be created after the project.
+        new_project.write({"task_ids": task_vals})
 
         return new_project
 
@@ -112,6 +118,14 @@ class Project(models.Model):
             "prefix": "{}-".format(self.key),
             "use_date_range": False,
         }
+
+        # When a new company is created, a project is created for this company.
+        # The key sequences to create stories and tasks with keys, created with
+        # this project, must be linked to the new company to avoid security
+        # issues.
+        company_id = self.env.context.get("project_sequence_company")
+        if company_id:
+            values["company_id"] = company_id
 
         if init:
             values.update(dict(number_increment=1, number_next_actual=1))

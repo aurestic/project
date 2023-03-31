@@ -27,7 +27,7 @@ msgstr ""
 
 #. module: project_key
 #: model:ir.model.fields,field_description:project_key.field_project_project__key
-msgid "Key"
+msgid "Project Key"
 msgstr ""
 
 #. module: project_key

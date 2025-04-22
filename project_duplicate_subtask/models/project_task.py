@@ -7,13 +7,6 @@ from odoo import models
 class ProjectTask(models.Model):
     _inherit = "project.task"
 
-    def duplicate_childs(self, new_task):
-        if self.child_ids:
-            for child in self.child_ids:
-                new_subtask = child.copy()
-                new_subtask.write({"parent_id": new_task.id})
-                child.duplicate_childs(new_subtask)
-
     def action_duplicate_subtasks(self):
         action = self.env.ref("project.action_view_task")
         result = action.read()[0]
@@ -22,7 +15,15 @@ class ProjectTask(models.Model):
             new_task = task.copy()
             task_created |= new_task
             if task.child_ids:
-                task.duplicate_childs(new_task)
+
+                def duplicate_childs(task, new_task):
+                    if task.child_ids:
+                        for child in task.child_ids:
+                            new_subtask = child.copy()
+                            new_subtask.write({"parent_id": new_task.id})
+                            duplicate_childs(child, new_subtask)
+
+                duplicate_childs(task, new_task)
 
         if len(task_created) == 1:
             res = self.env.ref("project.view_task_form2")
